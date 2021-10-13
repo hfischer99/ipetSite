@@ -1,20 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect, Text } from 'react'
 import { fade, makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import InputBase from '@material-ui/core/InputBase';
 import Badge from '@material-ui/core/Badge';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import MenuIcon from '@material-ui/icons/Menu';
-import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import Logo from "../../src/assets/pngwing.com.png";
+import { Link, withRouter, Route } from "react-router-dom";
+import io from 'socket.io-client'
 
 const useStyles = makeStyles((theme) => ({
   grow: {
@@ -78,16 +77,47 @@ const useStyles = makeStyles((theme) => ({
       display: 'none',
     },
   },
+  bar:{
+    background: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)',
+    border: 35,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+
+
+  },
 }));
 
-export default function PrimarySearchAppBar(props) {
+function PrimarySearchAppBar(props){
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
-
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+  const [data, setData] = React.useState({
+    idEstabelecimento: 10,
+    numero: 0
+ });
 
+ let socket = io(`http://localhost:4555`)
+
+
+ /*useEffect(() => {
+   
+   socket.on('notificacao', function (notifica) {
+     console.log(notifica.idEstabelecimento)
+     if(notifica.idEstabelecimento == data.idEstabelecimento){
+      console.log("entrei");
+      var valor = data.numero + 1;
+      setData({numero: valor})
+     }
+
+ 
+ 
+   });
+ 
+ }, {});*/
+ 
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -104,11 +134,38 @@ export default function PrimarySearchAppBar(props) {
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
-  const endereco = (props) => {
+  const endereco = () => {
     props.history.push({
       pathname: '/endereco' })
   }
+  const home = () => {
+    props.history.push({
+      pathname: '/app' })
+  }
+  const pet = () => {
+    props.history.push({
+      pathname: '/pet' })
+  }
+
+  const perfil = () => {
+    props.history.push({
+      pathname: '/perfil' })
+  }
+
+  const serv = () => {
+    props.history.push({
+      pathname: '/solicitacao' })
+  }
   const menuId = 'primary-search-account-menu';
+
+  const logout = () => {
+    localStorage.removeItem('@petid');
+    localStorage.removeItem('@ipet-Token');
+    props.history.push({
+      pathname: '/'
+    });
+  };
+
   const renderMenu = (
     <Menu
       anchorEl={anchorEl}
@@ -119,10 +176,12 @@ export default function PrimarySearchAppBar(props) {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Perfil</MenuItem>
-      <MenuItem onClick={handleMenuClose}>Minha Conta</MenuItem>
+      <MenuItem onClick={home}>Home</MenuItem>
+      <MenuItem onClick={perfil}>Meu Perfil</MenuItem>
       <MenuItem onClick={endereco}>Meus Endereços</MenuItem>
-      <MenuItem onClick={endereco}>Meus Pets</MenuItem>
+      <MenuItem onClick={pet}>Meus Pets</MenuItem>
+      <MenuItem onClick={serv}>Serviços</MenuItem>
+      <MenuItem onClick={logout}>Sair</MenuItem>
     </Menu>
   );
 
@@ -139,7 +198,7 @@ export default function PrimarySearchAppBar(props) {
     >
       <MenuItem>
         <IconButton aria-label="show 4 new mails" color="inherit">
-          <Badge badgeContent={4} color="secondary">
+          <Badge badgeContent={data.numero} color="primary">
             <MailIcon />
           </Badge>
         </IconButton>
@@ -147,7 +206,7 @@ export default function PrimarySearchAppBar(props) {
       </MenuItem>
       <MenuItem>
         <IconButton aria-label="show 11 new notifications" color="inherit">
-          <Badge badgeContent={1} color="secondary">
+          <Badge badgeContent={data.numero} color="secondary">
             <NotificationsIcon />
           </Badge>
         </IconButton>
@@ -169,25 +228,17 @@ export default function PrimarySearchAppBar(props) {
 
   return (
     <div className={classes.grow}>
-      <AppBar position="static">
+      <AppBar position="static" className={classes.bar}>
         <Toolbar>
-          <IconButton
-            edge="start"
-            className={classes.menuButton}
-            color="inherit"
-            aria-label="open drawer"
-          >
-            <MenuIcon />
-          </IconButton>
-          <img src={Logo} alt="IpetLogo" width="60" />
-          <Typography className={classes.title} variant="h6" noWrap>
+          <img src={Logo} alt="IpetLogo" width="60" style={{marginTop: 1}}/>
+          <Typography className={classes.title}  style={{marginTop: 1}} variant="h6" noWrap>
             iPet
           </Typography>
           
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton aria-label="show 17 new notifications" color="inherit">
-              <Badge badgeContent={17} color="secondary">
+              <Badge badgeContent={data.numero} color="secondary">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
@@ -202,21 +253,11 @@ export default function PrimarySearchAppBar(props) {
               <AccountCircle />
             </IconButton>
           </div>
-          <div className={classes.sectionMobile}>
-            <IconButton
-              aria-label="show more"
-              aria-controls={mobileMenuId}
-              aria-haspopup="true"
-              onClick={handleMobileMenuOpen}
-              color="inherit"
-            >
-              <MoreIcon />
-            </IconButton>
-          </div>
         </Toolbar>
       </AppBar>
-      {renderMobileMenu}
       {renderMenu}
     </div>
   );
 }
+
+export default withRouter(PrimarySearchAppBar);

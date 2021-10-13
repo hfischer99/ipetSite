@@ -35,7 +35,7 @@ handleSignUp = async e => {
   let formData = new FormData();
 formData.append('nome', this.state.nome);
 formData.append('cpf', this.state.cpf);
-formData.append('email', this.state.cpf);
+formData.append('email', this.state.email);
 formData.append('telefone', this.state.telefone);
 formData.append('tipo_usuario', 2);
 formData.append('password', this.state.password);

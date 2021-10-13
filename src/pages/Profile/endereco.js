@@ -241,6 +241,15 @@ const useStyles = makeStyles((theme) => ({
     top: 20,
     width: 1,
   },
+  button:{
+    background: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)',
+    border: 5,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+    height: 40,
+    padding: '0 30px',
+  },
 }));
 
 export default function EnhancedTable() {
@@ -491,8 +500,8 @@ const pegaEnd = async () => {
     </div>
     <div style={{marginTop: 5, marginLeft: '25%', marginBottom: 10}}class="ui action input">
     <TextField id="complemento" label="Complemento" variant="outlined" value={data6.complemento}style={{marginLeft: 15}} size={'small'} onChange={e => setData6({ complemento: e.target.value })}/>
-    <button class="ui basic button" onClick={novoEndereco} style={{marginLeft: 15}}> Novo Endereço</button>    
-    <button class="ui basic button" onClick={alteraEnd} style={{marginLeft: 15}}>Editar</button>
+    <button class="ui basic button" onClick={novoEndereco} style={{marginLeft: 15}} className={classes.button}> Novo Endereço</button>    
+    <button class="ui basic button" onClick={alteraEnd} style={{marginLeft: 15}} className={classes.button}>Editar</button>
     
     </div>
    

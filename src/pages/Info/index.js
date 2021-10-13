@@ -11,10 +11,12 @@ import 'react-credit-cards/es/styles-compiled.css';
 import { Alert } from '@material-ui/lab';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-
+import LoadingSpin from 'react-loading-spin';
+import io from 'socket.io-client'
+import Snackbar from '@material-ui/core/Snackbar';
+import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
@@ -103,6 +105,15 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(2),
     },
   },
+  alertadireita:{
+    background: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)',
+    border: 5,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+    height: 40,
+    padding: '0 30px',
+  }
 }));
 
 
@@ -113,9 +124,10 @@ const useStyles = makeStyles((theme) => ({
 export default function TitlebarGridList(props) {
   const classes = useStyles();
   const idUser = localStorage.getItem('@ipetid');
+  const UserName = localStorage.getItem('@ipetnome');
+  
   const [data, setData] = React.useState({
     endereco: [],
-    dadosPagamento: [],
     dinheiro: false,
     pagarme: false,
     color1: "default",
@@ -136,9 +148,32 @@ export default function TitlebarGridList(props) {
     valor: props.location.state.valor,
     pet: [],
     end: "",
-    controlaEffect: 0
+    controlaEffect: 0,
+    dadosPagamento: [{
+      "Empresa": props.location.state.nomeFantasia,
+      "ValorTotal": 0, 
+      "idUser": idUser
+
+
+
+    }]
   });
 
+  const [pet, setPet] = React.useState({
+    id:'',
+    porte:'',
+    nome:'',
+  })
+
+  const [endereco, setEndereco] = React.useState({
+    id:'',
+    rua:'',
+    numero:''
+  })
+  const [data1, setData1] = React.useState({
+    valorid: 0
+  })
+  
   const [data2, setData2] = React.useState({
     endereco: [],
     controleEndereco: '',
@@ -155,8 +190,25 @@ export default function TitlebarGridList(props) {
     controleMotorista: '',
     disponibilidadeMotorista: props.location.state.motorista,
   })
-    useEffect ((props) => {
 
+  const [tempo, setTempo] = React.useState({
+    controle: false,
+  })
+  const [open, setOpen] = React.useState(false);
+  const [open1, setOpen1] = React.useState(false);
+
+  let socket = io(`http://localhost:4555/`)
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+  
+    setOpen(false);
+    setOpen1(false);
+  };
+  
+    useEffect ((props) => {
       console.log(idUser)
           pegaEnd();
          //calculaValorFrete();
@@ -164,7 +216,25 @@ export default function TitlebarGridList(props) {
          pegaPet();
       
        
-        //const username = localStorage.getItem('@dadospessoais');
+         socket.on('notificacao', function (notifica) {
+          console.log(notifica)
+          if(data1.valorid == notifica.id_solicitacao){
+            
+            if(notifica.status == "aceito")
+            {
+              setTempo({controle: false});
+              setOpen(true);
+            }
+            if(notifica.status == "recusado"){
+              setTempo({controle: false});
+              setOpen1(true);
+            }
+            
+          }
+        
+        
+         
+        });
 
       
    
@@ -172,7 +242,10 @@ export default function TitlebarGridList(props) {
     
   },{});
 
+
   const pegaValor = async (id) => {
+    console.log("Este é o props", props.location.state.id_empresa)
+    await setPet({...pet, id: id.target.value.Id, porte: id.target.value.porte, nome: id.target.value.nome})
     var porte = id.target.value.porte;
     setData3({...data3, controle: 1})
 
@@ -249,6 +322,8 @@ export default function TitlebarGridList(props) {
 
 
   const calculaValorFrete = async (id) => {
+    console.log('Endereco', id.target.value.Id )
+    await setEndereco({...endereco, id:id.target.value.Id, rua:id.target.value.endereco, numero: id.target.value.numero })
 
       setData2({...data2, controle: 1})
       
@@ -312,29 +387,94 @@ export default function TitlebarGridList(props) {
     }
   }
 
- const CheckPagina = () => {
+
+ const CheckPagina = async (vlr) => {
+  const rand = 1 + Math.random() * (100 - 1);
+  setData1({valorid: rand})
+  setTempo({controle: true});
+  
    if(data.disponibilidadeMotorista == "Disponivel"){
     if(data.vlrBtn == 0 || data.vlrBtnMotorista == 0 || data3.controle == 0 || data2.controle == 0) {
       setData({...data, alerta: "Verifique as informações."})
-    } else{
+    } else {
+      const obj = {
+        id_solicitacao: data1.valorid,
+        valor_total: data.valorTotal, 
+        valor_frete: data.valorFrete, 
+        valor_servico: data.valor, 
+        formapagamento: data.vlrBtn, 
+        id_pessoa: parseInt(idUser), 
+        motorista: data.vlrBtnMotorista,
+        empresa: props.location.state.nomeFantasia, 
+        pet: pet.nome, 
+        porte: pet.porte,
+        solicitante: UserName,
+        descricao: props.location.state.descricao, 
+        id_pet: pet.id, 
+        id_empresa: props.location.state.id_empresa, 
+        endereco: endereco.rua,
+        numero: endereco.numero,
+        id_endereco: endereco.id, 
+        id_servico_empresa: props.location.state.Id,
+        agendamento: vlr == "2" ? "s" : "n",
+        manha: false,
+        tarde: false,
+        adisposicao: true,
+        id_transacao: 0
+      };
+
      if(data.vlrBtn == 1){
        props.history.push({
-         pathname: '/app' })
+         pathname: '/agendamento',
+         state: obj })
       } else {
        props.history.push({
-         pathname: '/checkout' })
+         pathname: '/checkout',
+         state: obj })
       }
     }
-   }else{
+   }
+   else{
     if(data.vlrBtn == 0 || data3.controle == 0) {
       setData({...data, alerta: "Verifique as informações."})
     } else{
+      const obj = {
+        id_solicitacao: data1.valorid,
+        valor_total: data.valorTotal, 
+        valor_frete: data.valorFrete, 
+        valor_servico: data.valor, 
+        formapagamento: data.vlrBtn, 
+        id_pessoa: parseInt(idUser), 
+        motorista: data.vlrBtnMotorista, 
+        empresa: props.location.state.nomeFantasia, 
+        pet: pet.nome, 
+        porte: pet.porte,
+        solicitante: UserName,
+        descricao: props.location.state.descricao, 
+        id_pet: pet.id, 
+        id_empresa: props.location.state.id_empresa, 
+        endereco: endereco.rua,
+        numero: endereco.numero,
+        id_endereco: endereco.id, 
+        id_servico_empresa: props.location.state.Id,
+        agendamento: vlr == "2" ? "s" : "n",
+        data: "",
+        periodo: "",
+        manha: false,
+        tarde: false,
+        adisposicao: true,
+        id_transacao: 0
+      };
+   
+
      if(data.vlrBtn == 1){
        props.history.push({
-         pathname: '/app' })
+        pathname: '/agendamento',
+        state: obj })
       } else {
        props.history.push({
-         pathname: '/checkout' })
+         pathname: '/checkout',
+         state: obj })
       }
 
 
@@ -358,13 +498,10 @@ export default function TitlebarGridList(props) {
 
    
  }
- const handleChange = (event) => {
-   setData({...data, end: event.target.value})
- console.log(event.target)
-};
+
 
  const retornaBotaoPagamento = () => {
-  if(data.controlePagamento == 0){
+  if(data.controlePagamento == 1){
     return(
       <div>
       <Chip className={classes.chip} label="Dinheiro/Cartão" clickable onClick={(e) => Check("1")} color={data.color1} />
@@ -416,6 +553,25 @@ const retornaBotaoEndereco = () => {
   }
 }
 
+const carregando = () => {
+
+  return(
+    <div>
+
+    <div style={{marginLeft: '50%', alignItems: 'center'}}>
+    <LoadingSpin
+    />
+    </div>   
+    <div style={{marginLeft: '43%'}}>
+    Aguardando estabelecimento...
+   </div>
+
+
+    </div>
+
+  
+  )
+}
 
   return (
 
@@ -423,9 +579,20 @@ const retornaBotaoEndereco = () => {
     <div className={classes.root}>
       <div style={{ width: "100%" }}> <Menu /></div>
       <div className={classes.centered}>
+     
         <Rating name="read-only" value={props.location.state.avaliacao} readOnly />
-        <img style={{ width: "100%", alignItems: 'center' }} src={props.location.state.foto} alt={props.location.state.foto.nomeFantasia} />
-        
+        <Snackbar open={open} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} onClose={handleClose} >
+        <Alert style={{marginTop: 50}} className={classes.alertadireta} onClose={handleClose} severity="success">
+            Seu pedido foi aprovado
+        </Alert>
+        </Snackbar>
+        <Snackbar open={open1} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} onClose={handleClose} >
+        <Alert style={{marginTop: 50}} className={classes.alertadireta} onClose={handleClose} severity="error">
+            Seu pedido foi recusado.
+        </Alert>
+        </Snackbar>
+        <img style={{ width: '100%'}} src={props.location.state.foto} alt={props.location.state.foto.nomeFantasia} />
+        {tempo.controle ? carregando() : tempo.controle}
         <div className={classes.rootx}>
         <div className={classes.alerta}>
         {data.alerta ? <Alert variant="filled" severity="error">{data.alerta}</Alert> : data.alerta}
@@ -453,17 +620,9 @@ const retornaBotaoEndereco = () => {
 
 </div>
 
-        {data4.controleMotorista ? retornaBotaoEndereco() : data4.controleMotorista}
-
-        
-      
-
-        
-
-        
-          <div className={classes.section1}>
-            
-          <Grid container alignItems="center">
+        {data4.controleMotorista ? retornaBotaoEndereco() : data4.controleMotorista}        
+          <div className={classes.section1}>         
+              <Grid container alignItems="center">
               <Grid item xs>
                 <Typography gutterBottom variant="h4">
                 {props.location.state.nomeFantasia}
@@ -474,7 +633,7 @@ const retornaBotaoEndereco = () => {
             </Typography>
             </Grid>
 
-
+            
             <Grid container alignItems="center">
               <Grid item xs>
                 <Typography gutterBottom variant="h6">
@@ -556,7 +715,8 @@ const retornaBotaoEndereco = () => {
               <Grid item xs>
                 <Typography gutterBottom variant="subtitle1">
                 
-                <Button color="primary" onClick={(e) => CheckPagina()}>Solicitar Serviço</Button> 
+                <Button color="primary" onClick={(e) => CheckPagina(1)}>Solicitar Serviço</Button> 
+                <Button color="primary" onClick={(e) => CheckPagina(2)}>Agendar Serviço</Button> 
             </Typography>
               </Grid>
 

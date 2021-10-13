@@ -4,15 +4,22 @@ import { Input } from 'semantic-ui-react'
 import Logo from "../../assets/pngwing.com.png";
 import api from "../../services/api";
 import { login } from "../../services/auth";
-
 import { Form, Container } from "./styles";
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 class SignIn extends Component {
   state = {
     email: "",
     password: "",
     error: "",
-    info: []
+    info: [],
+    checkedA: false,
+    checkedB: false,
+  };
+
+  handleChange = (event) => {
+    this.setState({[event.target.name]: event.target.checked });
   };
 
   handleSignIn = async e => {
@@ -27,11 +34,32 @@ class SignIn extends Component {
         login(response.data.token);
         console.log(response.data)
         localStorage.removeItem('@petid');
+        localStorage.removeItem('@ipetidempresa');
+        localStorage.removeItem('@ipetnome');
+        localStorage.setItem('@ipettoken', response.data.token)
         localStorage.setItem('@ipetid', response.data.user.id)
-        this.props.history.push({
-          pathname: '/app',
-          state: this.state.info
-        });
+        localStorage.setItem('@ipetidempresa', response.data.user.id_empresa)
+        localStorage.setItem('@ipetnome', response.data.user.nome)
+
+        if(response.data.user.role == "manager" && this.state.checkedA == true){
+          this.props.history.push({
+            pathname: '/admin',
+            state: this.state.info
+          });
+        } else if (response.data.user.role == "veterinario" && this.state.checkedA == true){
+          this.props.history.push({
+            pathname: '/veterinario',
+            state: this.state.info
+          });
+        } 
+        
+        else {
+          this.props.history.push({
+            pathname: '/app',
+            state: this.state.info
+          });
+        }
+
       } catch (err) {
         this.setState({
           error:
@@ -58,6 +86,11 @@ class SignIn extends Component {
             type="password"
             placeholder="Senha"
             onChange={e => this.setState({ password: e.target.value })}
+          />
+          <FormControlLabel
+          control={<Switch checked={this.state.checkedA} onChange={this.handleChange} name="checkedA" />}
+          label="Logar como administrador."
+          swi
           />
           <button type="submit" style={styles.Button}>Entrar</button>
           <hr />

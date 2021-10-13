@@ -23,9 +23,9 @@ import { Alert } from '@material-ui/lab';
 import Avatar from '@material-ui/core/Avatar';
 import { Input } from 'semantic-ui-react'
 import Axios from "axios";
-
-
-
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import moment from 'moment'
 const rows = [
     {
         "Id": 1,
@@ -247,12 +247,26 @@ const useStyles = makeStyles((theme) => ({
     top: 20,
     width: 1,
   },
+  button:{
+    background: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)',
+    border: 5,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+    height: 40,
+    padding: '0 30px',
+  },
+  switch:{
+    trackColor: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)'
+  }
 }));
 
-export default function EnhancedTable() {
 
+
+export default function EnhancedTable() {
 const idUser = localStorage.getItem('@ipetid');
 const classes = useStyles();
+
 const [order, setOrder] = React.useState('asc');
 const [orderBy, setOrderBy] = React.useState('calories');
 const [selected, setSelected] = React.useState([]);
@@ -267,7 +281,9 @@ const [data, setData] = React.useState({
       endereco: [],
       alerta: '',
       alertaKey: '',
-      key: ''
+      key: '',
+      checkedA: false,
+      checkedB: false,
   });
 
 const [dataImg, setImg] = React.useState({
@@ -275,46 +291,70 @@ const [dataImg, setImg] = React.useState({
     selectFile: null,
 });
 
+
+
+const [data1, setData1] = React.useState({
+  porte: '',
+});
 const [data2, setData2] = React.useState({
-    endereco: '',
+    nome: '',
 });
 
 const [data3, setData3] = React.useState({
-    numero: '',
+    raca: '',
 });
 const [data4, setData4] = React.useState({
-    cep: '',
+    peso: '',
 });
 const [data5, setData5] = React.useState({
-    cidade: '',
+    data_nascimento: '',
 });
 const [data6, setData6] = React.useState({
-  complemento: '',
+  selectFile: '',
+  profileImage: ''
 });
 
 const [data7, setData7] = React.useState({
   id: '',
 });
   
+const [data8, setData8] = React.useState({
+  key: '',
+  alerta: '',
+  tipo: ''
+});
+
+const [data9, setData9] = React.useState({
+  controle: 0
+});
+
+const [data10, setData10] = React.useState({
+  foto: ''
+});
+
+const [data11, setData11] = React.useState({
+  cod: ''
+});
 useEffect ((props) => { 
   pegaPet();  
 },{});
 
+const handleChange = (event) => {
+  setData({ ...data, [event.target.name]: event.target.checked });
+};
+
 const handleImageChange = event =>{
+ 
+  setData9({controle: 1})
     const file = URL.createObjectURL(event.target.files[0]);
-      setImg({
+      setData6({
       selectFile: event.target.files[0],
       profileImage: file
     })
+    console.log(data6.selectFile)
   }
-const fileUpload = ()=>{
-    const fd = new FormData();
-    fd.append('Image', this.state.selectFile, this.state.selectFile.name);
-    Axios.post('http://www.ipet.kinghost.net/v1/account/UploadFile',fd)
-    .then(res =>{
-      console.log(res);
-    })
-  }
+
+
 const pegaPet = async () => {
     
     await fetch('http://www.ipet.kinghost.net/v1/account/PegaPet', {
@@ -340,23 +380,23 @@ const pegaPet = async () => {
         //disponibilidadeMotorista();
   }
 
-  const deletaEnd = async (id) => {
+  const deletaPet = async (id) => {
     
-    await fetch('http://www.ipet.kinghost.net/v1/account/DeletaEndereco', {
+    await fetch('http://www.ipet.kinghost.net/v1/account/DeletaPet', {
        method: "POST",
        headers: {
            'Accept': 'application/json',
            'Content-Type': 'application/json'
        },
        body: JSON.stringify({
-         "Id": parseInt(id),
+         "Id": data7.id,
    
        })
    })
        .then((responseJson) => {
         console.log(responseJson);
 
-
+          pegaPet();
         
        }
        )
@@ -366,49 +406,61 @@ const pegaPet = async () => {
  }
 
 
- const alteraEnd = async (id) => {
-   console.log("id", data7.id)
-   console.log("endereco", data2.endereco)
-   console.log("numer", data3.numero)
-   console.log("cep", data4.cep)
-   console.log("cidade", data5.cidade)
-   console.log("complemento", data6.complemento)
-   console.log("id_pessoa", parseInt(id))
+ const alteraPet = async (id) => {
 
-   if( !data2.endereco || !data3.numero || !data4.cep || !data5.cidade || !data6.complemento){
+    
+  var data = moment(data5.data_nascimento);
+   if( !data2.nome || !data3.raca || !data4.peso || !data5.data_nascimento){
       setData({...data, alerta: 'Verifique se todos os dados estão preenchidos.'})
    } else{
 
-    await fetch('http://www.ipet.kinghost.net/v1/account/EditarEndereco', {
-      method: "POST",
-      headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "Id": data7.id,
-        "endereco": data2.endereco,
-        "numero": data3.numero,
-        "cep": data4.cep,
-        "cidade": data5.cidade,
-        "complemento": data6.complemento,
-        "id_pessoa": parseInt(idUser), 
-      })
-  })
-      .then((responseJson) => {
-       console.log(responseJson);
-   
-      }
-      )
-      .catch((error) => { console.log("erro fetch", error) });
-   }
-   
-    
+    if(data9.controle == 0){
+      console.log("entrei no controle 0")
+      console.log(data10.foto)
+      let formData = new FormData();
+      formData.append('id', data7.id);
+      formData.append('nome', data2.nome);
+      formData.append('raca', data3.raca);
+      formData.append('peso', data4.peso);
+      formData.append('id_pessoa', parseInt(idUser));
+      formData.append('data_nascimento', data.format("YYYY-MM-DD"));
+      formData.append('foto', data10.foto);
+      await fetch('http://www.ipet.kinghost.net/v1/account/AlterarPet', {
+        method: "POST",      
+        body: formData
+    })
+        .then((responseJson) => {
+         console.log(responseJson);
+          pegaPet();
+        }
+        )
+        .catch((error) => { console.log("erro fetch", error) });
+     }else {
+      console.log("entrei no controle fetch 1")
+      let formData = new FormData();
+      formData.append('id', data7.id);
+      formData.append('nome', data2.nome);
+      formData.append('raca', data3.raca);
+      formData.append('peso', data4.peso);
+      formData.append('id_pessoa', parseInt(idUser));
+      formData.append('data_nascimento', data5.data_nascimento);
+      formData.append('Image', data6.selectFile, data6.selectFile.name);
+      await fetch('http://www.ipet.kinghost.net/v1/account/AlterarPet', {
+        method: "POST",      
+        body: formData
+    })
+        .then((responseJson) => {
+         console.log(responseJson);
+          pegaPet();
+        }
+        )
+        .catch((error) => { console.log("erro fetch", error) });
+     }  
+    }
 
-     
-     
+   
+        
 }
-
 
   const geraChave = async (rowNome,rowId) =>{
 
@@ -427,11 +479,66 @@ const pegaPet = async () => {
         .then((response) => response.json())
         .then((responseJson) => {
           console.log(responseJson)
-          setData({...data, alertaKey: "A chave de compartilhamento é: " + responseJson})
+          setData({...data, alertaKey: "A chave de compartilhamento é: " + responseJson, key: responseJson})
+          alteraChave(responseJson)
         }
         )
         .catch((error) => { console.log("erro fetch", error) });
 
+
+    //setData({...data, alertaKey: "A chave de compartilhamento é:" + rowNome + rowId})
+  }
+
+  const alteraChave = async (chave) => {
+    let formData = new FormData();
+    var data = moment(data5.data_nascimento);
+
+formData.append('id', data7.id);
+formData.append('nome', data2.nome);
+formData.append('raca', data3.raca);
+formData.append('peso', data4.peso);
+formData.append('id_pessoa', parseInt(idUser));
+formData.append('data_nascimento', data.format("YYYY-MM-DD"));
+formData.append('foto', data10.foto);
+formData.append('cod', chave);
+fetch('http://www.ipet.kinghost.net/v1/account/AlterarPet', {
+  method: "POST",      
+  body: formData
+})
+  .then((responseJson) => {
+   console.log(responseJson);
+    //pegaPet();
+  }
+  )
+  .catch((error) => { console.log("erro fetch", error) });
+  }
+
+  const addPetCompartilhado = async (pet) =>{
+    
+    console.log(data8.key)
+    await fetch('http://www.ipet.kinghost.net/v1/account/AdicionarPetCompartilhado', {
+      method: "POST",
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "cod": data8.key,
+        "id_pessoa": parseInt(idUser)
+      })
+  })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log(responseJson)
+        if(responseJson == "Chave não existe"){
+          setData8({...data8, alerta: "Verifique a chave digitada.", tipo: "error"})
+        }else{
+          setData8({...data8, alerta: "Vinculo realizado com sucesso." , tipo: "success"})
+          pegaPet();
+        }
+      }
+      )
+      .catch((error) => { console.log("erro fetch", error) });
 
     //setData({...data, alertaKey: "A chave de compartilhamento é:" + rowNome + rowId})
   }
@@ -454,14 +561,13 @@ const pegaPet = async () => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
     
-    console.log(name.Id);
-    setData2({endereco: name.endereco})
-    setData3({numero: name.numero})
-    setData4({cep: name.cep})
-    setData5({cidade: name.cidade})
-    setData6({complemento: name.complemento})
+    setData2({nome: name.nome})
+    setData3({raca: name.raca})
+    setData4({peso: name.peso})
+    setData5({data_nascimento: name.data_nascimento})
     setData7({id: name.Id})
-
+    setData10({foto: name.foto})
+    setData11({cod: name.cod})
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
@@ -481,32 +587,30 @@ const pegaPet = async () => {
   };
 
 
-  const novoEndereco = () => {
-    if( !data2.endereco || !data3.numero || !data4.cep || !data5.cidade){
-      setData({...data, alerta: 'Verifique se todos os dados estão preenchidos.'})
-   } else{
-    fetch('http://www.ipet.kinghost.net/v1/account/AdicionarEndereco',{
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-      },
-        body: JSON.stringify({
-          "endereco": data2.endereco,
-          "numero": data3.numero,
-          "cep": data4.cep,
-          "cidade": data5.cidade,
-          "id_pessoa": parseInt(idUser),
-          "complemento": data6.complemento
+  const novoPet = async () => {
+    var data = moment(data5.data_nascimento);
+    let formData = new FormData();
+    formData.append('nome', data2.nome);
+    formData.append('raca', data3.raca);
+    formData.append('peso', data4.peso);
+    formData.append('id_pessoa', parseInt(idUser));
+    formData.append('data_nascimento', data.format("YYYY-MM-DD"));
+    formData.append('Image', data6.selectFile, data6.selectFile.name);
   
-      })
+
+    if(!data2.nome || !data3.raca || !data4.peso || !data5.data_nascimento){
+      setData({...data, alerta: 'Verifique se todos os dados estão preenchidos.'})
+    } else{
+
+    fetch('http://www.ipet.kinghost.net/v1/account/AdicionarPet',{
+        method: "POST",
+        body: formData
     })
     
-       
-       .then((response) => response.json())
+       .then((response) => response.text())
        .then((responseJson) => {
         console.log(responseJson);
-
+        pegaPet();
 
          
          
@@ -518,7 +622,20 @@ const pegaPet = async () => {
     }
   }
   
+  const petCadastrado = () => {
+    if(data.checkedA == true){
+      return (
+
+        <div class="ui action input">
+        <TextField id="nome" label="Código do pet" variant="outlined" value={data8.key}style={{marginLeft: 15}} size={'small'} onChange={e => setData8({ key: e.target.value })} /> 
+        <button className={classes.button} onClick={addPetCompartilhado} style={{marginLeft: 15}}>Ok</button>     
+        </div>
   
+      );
+    }
+    
+  }
+
 
   const isSelected = (id) => selected.indexOf(id) !== -1;
 
@@ -538,21 +655,33 @@ const pegaPet = async () => {
     </div>
     <div style={{marginLeft: '25%', marginBottom: 10}}class="ui action input">
         
-    <TextField id="nome" label="Nome" variant="outlined" value={data2.endereco}style={{marginLeft: 15}} size={'small'} onChange={e => setData2({ endereco: e.target.value })} /> 
-    <TextField id="raca" label="Raca" variant="outlined" value={data3.numero} style={{marginLeft: 15}} size={'small'} onChange={b => setData3({ numero: b.target.value })}/>
-    <TextField id="peso" label="Peso" variant="outlined" value={data5.cidade}style={{marginLeft: 15}} size={'small'} onChange={d => setData5({ cidade: d.target.value })}/>
-    <TextField id="data_nascimento" label="Data Nascimento" variant="outlined" value={data6.complemento}style={{marginLeft: 15}} size={'small'} onChange={e => setData6({ complemento: e.target.value })}/>
+    <TextField id="nome" label="Nome" variant="outlined" value={data2.nome}style={{marginLeft: 15}} size={'small'} onChange={e => setData2({ nome: e.target.value })} /> 
+    <TextField id="raca" label="Raca" variant="outlined" value={data3.raca} style={{marginLeft: 15}} size={'small'} onChange={b => setData3({ raca: b.target.value })}/>
+    <TextField id="peso" label="Peso" variant="outlined" value={data4.peso}style={{marginLeft: 15}} size={'small'} onChange={d => setData4({ peso: d.target.value })}/>
+    <TextField id="data_nascimento" label="Data Nascimento" variant="outlined" value={data5.data_nascimento}style={{marginLeft: 15}} size={'small'} onChange={e => setData5({ data_nascimento: e.target.value })}/>
     </div>
     <div style={{marginTop: 5, marginLeft: '25%', marginBottom: 10}}class="ui action input">
-    <Avatar style={{marginLeft: 15}} src={dataImg.profileImage}  size="large"/>
+    <Avatar style={{marginLeft: 15}} src={data6.profileImage}  size="large"/>
     <Input type="file" style={{marginLeft: 15, width: 330}} onChange={handleImageChange}/>
-    <button class="ui basic button" color="success.main" onClick={novoEndereco} style={{marginLeft: 15}}> Novo Pet</button>    
-    <button class="ui basic button" onClick={alteraEnd} style={{marginLeft: 15}}>Editar</button>
+    <button className={classes.button} onClick={novoPet} style={{marginLeft: 15}}> Novo Pet</button>    
+    <button className={classes.button} onClick={alteraPet} style={{marginLeft: 15}}>Editar</button>
     
     </div>
-   
+    <div style={{marginTop: 25, marginLeft: '25%'}} class="ui action input">
+ 
+<FormControlLabel
+control={<Switch checked={data.checkedA} onChange={handleChange} name="checkedA" />}
+label="Desejo visualizar um pet já cadastrado."
+color={"primary"}
+swi
+/>
+{data.checkedA ? petCadastrado() : data.checkedA}
+
+</div>
+
       <Paper className={classes.paper}>
-      {data.alertaKey ? <Alert variant="filled" severity="success" style={{height: '100%'}}>{data.alertaKey}</Alert> : data.alertaKey}
+      {data.alertaKey ? <Alert variant="filled" severity="success" style={{ height: '100%', marginTop: 10}}>{data.alertaKey}</Alert> : data.alertaKey}
+      {data8.alerta ? <Alert variant="filled" severity={data8.tipo} style={{ height: '100%', marginTop: 10}}>{data8.alerta}</Alert> : data.alerta}
         <TableContainer>
           <Table
             className={classes.table}
@@ -589,6 +718,7 @@ const pegaPet = async () => {
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ 'aria-labelledby': labelId }}
+                          color={"primary"}
                         />
                       </TableCell>
                       <TableCell align="left"><Avatar alt="Remy Sharp" src={row.foto} style={{ height: '50px', width: '50px' }} /></TableCell>
@@ -602,7 +732,7 @@ const pegaPet = async () => {
                       <TableCell align="left">{row.data_nascimento}</TableCell>
                       
                       <Tooltip style={{marginTop: 5}} title="Delete">
-                      <IconButton aria-label="delete" onClick={() => deletaEnd(row.Id)}>              
+                      <IconButton aria-label="delete" onClick={() => deletaPet()}>              
                       <DeleteIcon/>
                       </IconButton>       
                       </Tooltip>
@@ -615,15 +745,15 @@ const pegaPet = async () => {
                     </TableRow>
                   );
                 })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
+                    
+              
+              
             </TableBody>
+            
           </Table>
+          
         </TableContainer>
-
+              
       </Paper>
     </div>
   );

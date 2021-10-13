@@ -12,6 +12,9 @@ import NativeSelect from '@material-ui/core/NativeSelect';
 import InputBase from '@material-ui/core/InputBase';
 import { Rating } from '@material-ui/lab';
 import { withRouter } from 'react-router-dom';
+import io from 'socket.io-client'
+import Snackbar from '@material-ui/core/Snackbar';
+import { Alert } from '@material-ui/lab';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -60,6 +63,16 @@ const useStyles = makeStyles((theme) => ({
   inputRoot: {
     color: 'inherit',
   },
+  alerta:{
+    background: 'linear-gradient(45deg, #836FFF 30%, #6A5ACD 90%)',
+    border: 5,
+    borderRadius: 3,
+    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+    color: 'white',
+    height: 40,
+    padding: '0 30px',
+  },
+ 
 }));
 
 const BootstrapInput = withStyles((theme) => ({
@@ -108,9 +121,10 @@ const [data, setData] = React.useState({
     resposta: [],
     texto: "",
     dadosPessoais: [],
-    dadosLoginID: props.location.state.user.id,
+    //dadosLoginID: props.location.state.user.id,
+    idcliente: 10,
  });
-
+ const [open, setOpen] = React.useState(false);
 
 
 
@@ -214,6 +228,8 @@ const handleChange = (event) => {
   
 };
 
+
+
 var texto = "";
 const searchtext = (event) => {
   texto =  event.target.value  
@@ -225,7 +241,7 @@ const search = (event) => {
     method: "POST",
     headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
     },
     body: JSON.stringify({
         "Cidade": "Pinhais",
@@ -243,8 +259,31 @@ const search = (event) => {
 
 }
 
+let socket = io(`http://localhost:4555`)
+
+
+const handleClick = () => {
+  setOpen(true);
+};
+
+const handleClose = (event, reason) => {
+  if (reason === 'clickaway') {
+    return;
+  }
+
+  setOpen(false);
+};
+
 useEffect(() => {
-  localStorage.setItem('@ipetid', data.dadosLoginID)
+  
+  socket.on('notificacao', function (notifica) {
+    setOpen(true);
+
+
+
+  });
+
+  //localStorage.setItem('@ipetid', data.dadosLoginID)
   if(data.dadosPessoais.length == 0){
     //console.log("state teste",props)
     fetch('http://www.ipet.kinghost.net/v1/account/RetornaDados', {
@@ -270,16 +309,28 @@ useEffect(() => {
       .catch((error) => { console.log("erro fetch", error) });
   
 }
+
+
+
+
 }, {});
 
   return (
-    
+
     
     <div className={classes.root}>
        <div style={{width: "100%"}}>
-         <Menu/>
+         <Menu />
     </div>
-      <GridList cellHeight={480}className={classes.gridList} cols={2}>
+    <div>
+    <Snackbar open={open} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}onClose={handleClose} >
+        <Alert style={{marginTop: 50}} className={classes.alerta} onClose={handleClose} severity="success">
+          This is a success message! This is a success message!
+        </Alert>
+      </Snackbar>
+    </div>
+
+      <GridList cellHeight={480} className={classes.gridList} cols={2}>
       
         <GridListTile key="Subheader" cols={2} style={{ height: 'auto' }} onTouchTap={(e) => console.log(e)}>
 
@@ -320,7 +371,7 @@ useEffect(() => {
             <img src={tile.foto} alt={tile.nomeFantasia} />
             <GridListTileBar
               title={tile.nomeFantasia}
-              subtitle={"TESTE HUDASHUDHUASHUDA /N AAAAAAAAA"}
+              subtitle={tile.descricao}
               actionIcon={
                 <IconButton aria-label={`info about ${tile.nomeFantasia}`} className={classes.icon}>
                   <InfoIcon />
